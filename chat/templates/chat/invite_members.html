@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="shadow p-2">
+            <h5 class="text-success mb-3">Invite Members</h5>
+            <form action="" method="POST">
+                {% csrf_token %}
+                <div>
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control mb-3" placeholder="Enter Email" name="email">
+                    <button type="submit" class="btn btn-success">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

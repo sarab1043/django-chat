@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="box boder shadow p-4">
+                <div class="mb-3">
+                    <label for="room" class="form-label fw-bold">Room Name</label>
+                    <input type="text" class="form-control mb-3"  placeholder="Enter Room Name" id="room-name-input" name="roomname" style="text-transform:capitalize"> 
+                    <button type="button" class="btn btn-success" id="room-name-submit" value="enter">Enter Room</button>
+                  </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelector('#room-name-input').focus();
+        document.querySelector('#room-name-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#room-name-submit').click();
+            }
+        };
+
+        document.querySelector('#room-name-submit').onclick = function(e) {
+            var roomName = document.querySelector('#room-name-input').value;
+            window.location.pathname = '/chat/room/' + roomName + '/';
+        };
+    </script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+     <!-- all users -->
+     <div class="col-md-5">
+        <div class="users_list" style="height:81%;overflow:scroll">
+            <ul class="list-unstyled">
+                {% for u in all_users %}
+                <li class="text-decoration-none border p-3 fw-bold">{{u.first_name|capfirst}}
+                    <a href="{% url 'private' u.first_name %}" class="float-end btn-success p-2 text-decoration-none" type="button" >Send Message</a>
+                </li>
+                {% endfor %}
+            </ul>
+            <h6>Groups</h6>
+            <ul class="list-unstyled">
+                {% for g in rooms %}
+                <li class="text-decoration-none border p-3 fw-bold">{{g.name|capfirst}}
+                    <a href="{% url 'room' g.name %}" class="float-end btn-success p-2 text-decoration-none" type="button">Open Group</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mes_box border p-2">
+            <div class="bg-info p-4 fw-bold">
+                <h6>Hello {{request.user.first_name}}</h6>
+                <h4>{{data.first_name|capfirst}}</h4>
+                <span class="float-end"><a href="{% url 'signout' %}" class="text-danger">Sign out</a></span><br>
+            </div>
+            <div id="chat-messages" style="height:500px;overflow-y: scroll;">
+                
+            </div>
+            <div class="input-group  dropdown_box">
+                <input id="chat-message-input"  class="form-control  shadow-none mb-1" type="text"></input>
+                <button type="button" class="btn btn-success text-white" id="chat-message-submit" type="button" value="Send">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ name|json_script:"json-name"}}
+{{ request.user.first_name|json_script:"json-user"}}
+<script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.js" integrity="sha512-aGWPnmdBhJ0leVHhQaRASgb0InV/Z2BWsscdj1Vwt29Oic91wECPixuXsWESpFfCcYPLfOlBZzN2nqQdMxlGTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    $("#chat-message-input").emojioneArea({
+    pickerPosition : "top"
+   })
+   const receiver = JSON.parse(document.getElementById('json-name').textContent);
+   const sender = JSON.parse(document.getElementById('json-user').textContent);
+
+//    const chatSocket = new WebSocket(
+//     'ws://'+window.location.host+'/ws/chat/private/'+receiver+'/'
+//    )
+
+   chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        if (data.message!=0) {
+            document.querySelector('#chat-messages').innerHTML += 
+      `<div class="text-success">${data.receiver}</div><input type="text" class="form-control shadow-none" value="${data.message}" readonly/>
+      `
+        }
+
+      scrollToBottom();
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'receiver' : receiver,
+            'sender' : sender
+        }));
+
+        messageInputDom.value = '';
+        
+        console.log(message)
+        console.log(sender)
+        console.log(receiver)
+       
+    };
+</script>
+{% endblock %}

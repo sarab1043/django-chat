@@ -1,0 +1,162 @@
+{% comment %} {% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <!-- all users -->
+   
+    <!-- message box -->
+    <div class="col-md-6">
+        <div class="mes_box border p-2">
+            <div class="bg-info p-4 fw-bold">
+                <h6>Hello {{user.first_name}}</h6>
+                <h4>Welcome to {{room_name|upper}} Group</h4>
+               </a>
+               
+                <span class="float-end"><a href="{% url 'signout' %}" class="text-danger">Sign out</a></span><br>
+            </div>
+            <div id="chat-messages" style="height:500px;overflow-y: scroll;">
+                {% for i in messages %}
+                <div class="text-success">
+                    {{i.user.first_name}}
+                   </a>
+                </div>
+                <input type="text" class="form-control shadow-none" value="{{i.message}}" readonly> 
+                <p class="text-muted">{{i.date_added|date:"m.d.Y h:i a"}}</p>
+                {% endfor %}
+            </div>
+            <div class="input-group  dropdown_box">
+                
+                <input id="chat-message-input"  class="form-control  shadow-none mb-1" type="text"></input>
+                <button type="button" class="btn btn-success text-white" id="chat-message-submit" type="button" value="Send">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{ room_name|json_script:"json-roomname" }}
+{{ request.user.first_name|json_script:"json-username" }}
+
+<script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.js" integrity="sha512-aGWPnmdBhJ0leVHhQaRASgb0InV/Z2BWsscdj1Vwt29Oic91wECPixuXsWESpFfCcYPLfOlBZzN2nqQdMxlGTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+
+   $("#chat-message-input").emojioneArea({
+    pickerPosition : "top"
+   })
+  
+   
+    const roomName = JSON.parse(document.getElementById('json-roomname').textContent);
+    const userName = JSON.parse(document.getElementById('json-username').textContent);
+ 
+
+    const chatSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/chat/'
+        + roomName
+        + '/'
+    )
+     console.log("chatSocket", chatSocket)
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        if (data.message!=0) {
+            document.querySelector('#chat-messages').innerHTML += 
+      `<div class="text-success">${data.username}</div><input type="text" class="form-control shadow-none" value="${data.message}" readonly/>
+      <p class="text-muted">${data.timestamp}</p>`
+        }
+
+      scrollToBottom();
+    };
+    chatSocket.onclose = function (e) {
+        console.log('WebSocket closed:', e);
+        // Optional: attempt to reconnect
+    };
+    chatSocket.onerror = function (e) {
+        console.error('WebSocket error:', e);
+    };
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': userName,
+            'room' : roomName
+        }));
+
+        messageInputDom.value = '';
+        
+        console.log(message)
+        console.log(roomName)
+    };
+
+    function scrollToBottom() {
+    let objDiv = document.getElementById("chat-messages");
+    objDiv.scrollTop = objDiv.scrollHeight;
+}
+    scrollToBottom();
+  
+</script>
+{% endblock %} {% endcomment %}
+
+
+
+
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+</head>
+<body>
+    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <input id="chat-message-input" type="text" size="100"><br>
+    <input id="chat-message-submit" type="button" value="Send">
+    {{ room_name|json_script:"room-name" }}
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        console.log(roomName)
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+            + roomName
+            + '/'
+        );
+
+        console.log(chatSocket)
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log(e)
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+</body>
+</html>

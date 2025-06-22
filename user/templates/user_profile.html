@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="border p-4">
+            <h4>User profile</h4>
+           <h6 class = "text-primary">{{user_obj.firstname}}</h6>
+           <p class = "text-success">{{user_profile.online}}</p>
+           <p class = "text-danger">{{user_profile.offline}}</p>
+           <p class = "">{{user_profile.last_seen}}</p>
+    </div>
+</div>
+{% endblock %}
